@@ -1,38 +1,152 @@
 package edu.escuelaing.arep.app;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * Unit test for simple App.
  */
-public class AppTest 
-    extends TestCase
-{
-    /**
-     * Create the test case
-     *
-     * @param testName name of the test case
-     */
-    public AppTest( String testName )
-    {
-        super( testName );
+public class AppTest {
+
+    private static Thread serverThread;
+
+    @BeforeAll
+    static void startServer() {
+        serverThread = new Thread(() -> {
+            try {
+                WebApplication.main(new String[]{});
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        serverThread.start();
+
+        // Esperar unos segundos para que el servidor inicie
+        try { Thread.sleep(3000); } catch (InterruptedException ignored) {}
     }
 
-    /**
-     * @return the suite of tests being tested
-     */
-    public static Test suite()
-    {
-        return new TestSuite( AppTest.class );
+    @AfterAll
+    static void stopServer() {
+        serverThread.interrupt();
     }
 
-    /**
-     * Rigourous Test :-)
-     */
-    public void testApp()
-    {
-        assertTrue( true );
+    @Test
+    void testGetIndexHtml() throws Exception {
+        URL url = new URL("http://localhost:35000/");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+
+        assertEquals(200, conn.getResponseCode());
+        String contentType = conn.getHeaderField("Content-Type");
+        assertEquals("text/html", contentType);
+    }
+
+    @Test
+    void testGetNotFound() throws Exception {
+        URL url = new URL("http://localhost:35000/noexiste.html");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+
+        assertEquals(404, conn.getResponseCode());
+    }
+
+    @Test
+    void testRestServiceGet() throws Exception {
+        URL url = new URL("http://localhost:35000/app/rest-service");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+
+        assertEquals(200, conn.getResponseCode());
+        String responseBody = readResponse(conn);
+        assertTrue(responseBody.contains("\"names\""));
+    }
+
+    @Test
+    void testRestServicePost() throws Exception {
+        URL url = new URL("http://localhost:35000/app/rest-service?name=TestUser");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+
+        assertEquals(201, conn.getResponseCode());
+        String responseBody = readResponse(conn);
+        assertTrue(responseBody.contains("\"name\":\"TestUser\""));
+    }
+
+    @Test
+    void testLambdaFunctionGetHelloWorld() throws Exception {
+        URL url = new URL("http://localhost:35000/app/helloWorld");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+
+        assertEquals(200, conn.getResponseCode());
+        String responseBody = readResponse(conn);
+        assertTrue(responseBody.contains("\"response\":\"hello world!\""));
+    }
+
+    @Test
+    void testLambdaFunctionGetHello() throws Exception {
+        String name = "Mauricio";
+        URL url = new URL("http://localhost:35000/app/hello?name=" + name);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+
+        assertEquals(200, conn.getResponseCode());
+        String responseBody = readResponse(conn);
+        assertTrue(responseBody.contains("\"response\":\"Hello " + name +"\""));
+    }
+
+    @Test
+    void testLambdaFunctionGetAge() throws Exception {
+        String name = "Mauricio";
+        String age = "21";
+        URL url = new URL("http://localhost:35000/app/hello/age?name=" + name + "&age=" + age);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+
+        assertEquals(200, conn.getResponseCode());
+        String responseBody = readResponse(conn);
+        assertTrue(responseBody.contains("\"response\":\"Hello " + name + ", your age is " + age + "\""));
+    }
+
+    @Test
+    void testLambdaFunctionGetPi() throws Exception {
+        URL url = new URL("http://localhost:35000/app/pi");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+
+        assertEquals(200, conn.getResponseCode());
+        String responseBody = readResponse(conn);
+        assertTrue(responseBody.contains("\"response\":\"" + Math.PI + "\""));
+    }
+
+    @Test
+    void testLambdaFunctionGetEuler() throws Exception {
+        URL url = new URL("http://localhost:35000/app/Euler");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+
+        assertEquals(200, conn.getResponseCode());
+        String responseBody = readResponse(conn);
+        assertTrue(responseBody.contains("\"response\":\"" + Math.E + "\""));
+    }
+
+    private String readResponse(HttpURLConnection conn) throws Exception {
+        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        String inputLine;
+        StringBuilder response = new StringBuilder();
+
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
+        }
+        in.close();
+        return response.toString();
     }
 }
