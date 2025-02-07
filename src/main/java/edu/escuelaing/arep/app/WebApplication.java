@@ -14,7 +14,7 @@ public class WebApplication {
 
         get("/pi", (req, resp) -> String.valueOf(Math.PI));
 
-        get("/Euler", (req, resp) -> String.valueOf(Math.E));
+        get("/e", (req, resp) -> String.valueOf(Math.E));
 
         start();
     }

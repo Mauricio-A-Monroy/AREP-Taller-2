@@ -129,7 +129,7 @@ public class AppTest {
 
     @Test
     void testLambdaFunctionGetEuler() throws Exception {
-        URL url = new URL("http://localhost:35000/app/Euler");
+        URL url = new URL("http://localhost:35000/app/e");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
 

@@ -34,14 +34,16 @@ public class HttpServer {
                 System.exit(1);
             }
 
-            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+            OutputStream outputStream = clientSocket.getOutputStream();
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(
                             clientSocket.getInputStream()));
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 
             BufferedOutputStream dataOut = new BufferedOutputStream(clientSocket.getOutputStream());
 
-            String inputLine, outputLine;
+            String inputLine;
+            HttpResponse response;
 
             boolean isFirstLine = true;
             String filePath = "";
@@ -70,17 +72,19 @@ public class HttpServer {
                     if (HTTPRequest.equals("POST")) {
                         idCounter += 1;
                     }
+                    outputStream.close();
                 }
                 else {
                     HttpRequest req = new HttpRequest(resourceURI.getPath(), resourceURI.getQuery());
-                    HttpResponse resp = new HttpResponse();
-                    outputLine = processRequest(req, resp);
-                    out.println(outputLine);
+                    response = processRequest(req);
+                    outputStream.write(response.buildResponse().getBytes());
+                    outputStream.flush();
                 }
             } else {
                 getDefaultResponse(filePath, out, dataOut);
             }
 
+            outputStream.close();
             out.close();
             in.close();
             clientSocket.close();
@@ -93,14 +97,19 @@ public class HttpServer {
     }
 
 
-    private static String processRequest(HttpRequest req, HttpResponse resp) {
+    private static HttpResponse  processRequest(HttpRequest req) {
+        HttpResponse response = new HttpResponse(200, "OK");
         System.out.println("Query: " + req.getQuery());
         System.out.println("Path: " + req.getPath());
         BiFunction<HttpRequest, HttpResponse, String> s = servicios.get(req.getPath());
-        String response = "HTTP/1.1 200 OK\r\n"
-                + "Content-Type: application/json\r\n"
-                + "\r\n"
-                + "{\"response\":\"" + s.apply(req, resp) + "\"}";
+
+        if (s != null) {
+            String responseBody = s.apply(req, response);
+            response.setBody("{\"response\":\"" + responseBody + "\"}", "application/json");
+        } else {
+            response = new HttpResponse(404, "Not Found");
+            response.setBody("<h1>404 Not Found</h1>", "text/html");
+        }
         return response;
 
     }
