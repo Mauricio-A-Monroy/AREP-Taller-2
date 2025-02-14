@@ -19,11 +19,23 @@ Este proyecto implementa un microframework web en Java sin el uso de frameworks 
 |   |   |   \---edu
 |   |   |       \---escuelaing
 |   |   |           \---arep
-|   |   |               \---app
-|   |   |                       HttpRequest.java
-|   |   |                       HttpResponse.java
-|   |   |                       HttpServer.java
-|   |   |                       WebApplication.java
+|   |   |               +---microspring
+|   |   |                   |   MicroServer.java
+|   |   |                   |
+|   |   |                   +---annotation
+|   |   |                   |       GetMapping.java
+|   |   |                   |       RequestParam.java
+|   |   |                   |       RestController.java
+|   |   |                   |
+|   |   |                   +---controller
+|   |   |                   |       GreetingController.java
+|   |   |                   |       MathController.java
+|   |   |                   |
+|   |   |                   \---http
+|   |   |                           HttpRequest.java
+|   |   |                           HttpResponse.java
+|   |   |                           HttpServer.java
+|   |   |                           ServiceHandler.java
 |   |   |
 |   |   \---resources
 |   |       \---static
@@ -42,8 +54,8 @@ Este proyecto implementa un microframework web en Java sin el uso de frameworks 
 |                   \---arep
 |                       \---app
 |                               AppTest.java
-```
 
+```
 ## Tecnologías utilizadas
 - **Java** (Manejo de servidor y lógica de negocio).
 - **HTML, CSS** (Interfaz de usuario en el lado del cliente).
